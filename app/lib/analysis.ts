@@ -1,4 +1,4 @@
-import type { Bazi, PillarDetail } from "./types";
+import type { Bazi, CardCopy, PillarDetail } from "./types";
 
 const STEM_COMBINATIONS: Record<string, string> = {
   甲己: "甲己相合", 乙庚: "乙庚相合", 丙辛: "丙辛相合", 丁壬: "丁壬相合", 戊癸: "戊癸相合",
@@ -13,29 +13,29 @@ const OUTCOMES: Record<string, string> = {
   食神: "可持续的产出", 伤官: "新的行动路径", 正财: "稳定可用的资源", 偏财: "更广的资源连接",
   比肩: "自主行动的空间", 劫财: "可以共同推进的局面",
 };
-const TENSION_LINES: Record<string, string> = {
-  正官: "当规则或位置不稳定时，你可能会更用力维持正确和可靠。",
-  七杀: "当压力缺少实际支撑时，你可能会用更高要求逼迫自己。",
-  正印: "当认可不够稳定时，你可能会更努力证明自己值得信任。",
-  偏印: "当独特经验得不到理解时，你可能会退回熟悉的小世界。",
-  食神: "当余裕不够稳定时，你可能会等到感觉合适才开始行动。",
-  伤官: "当行动空间受限时，你可能会把离开当成最快的解决办法。",
-  正财: "当稳定资源不足时，你可能会过度在意可控和确定。",
-  偏财: "当资源连接不稳定时，你可能会不断扩大关系和机会。",
-  比肩: "当自身支撑不够时，你可能会把所有事情都留给自己承担。",
-  劫财: "当合作或评价不够稳定时，你可能会更努力地证明自己有用、可靠。",
+const TIME_LINES: Record<string, string> = {
+  比肩: "越接近结果，你越希望保留自主决定和独立完成的空间。",
+  劫财: "越接近结果，你越会在合作、竞争和他人评价中确认位置。",
+  食神: "越接近结果，你越重视过程是否从容，并能形成持续产出。",
+  伤官: "越接近结果，你越希望打破限制，用自己的方式完成表达。",
+  偏财: "越接近结果，你越关注资源能否流动，并带来更多可能。",
+  正财: "越接近结果，你越在意安排是否稳定、具体并能够长期维持。",
+  七杀: "越接近结果，你越容易提高要求，希望尽快形成明确成果。",
+  正官: "越接近结果，你越在意责任、规则和长期安排是否清楚。",
+  偏印: "越接近结果，你越相信独特经验，并倾向保留自己的判断。",
+  正印: "越接近结果，你越重视知识、标准和外界认可是否可靠。",
 };
-const MAIN_TASKS: Record<string, string> = {
-  正官: "在建立规则和承担责任时，也为自己保留调整方向的空间。",
-  七杀: "把专精和执行从持续高压，变成能够按需调用的能力。",
-  正印: "让知识和认可成为支撑，而不是确认自身价值的唯一来源。",
-  偏印: "保留独特判断的同时，也让经验进入真实关系和生活。",
-  食神: "让从容和创造成为稳定能力，而不是只能等待合适条件。",
-  伤官: "把突破和变化变成主动选择，而不是遇到限制就离开。",
-  正财: "在经营稳定生活的同时，也为变化和真实需要留下空间。",
-  偏财: "把连接资源、扩大机会的能力，变成有边界且可以选择的工具。",
-  比肩: "让自立成为可以选择的能力，而不是凡事只能依靠自己。",
-  劫财: "在合作和竞争中确认边界，不再只靠比较证明自己的位置。",
+const TASK_OPENERS: Record<string, string> = {
+  比肩: "依靠自己打开局面时", 劫财: "在合作与竞争中行动时", 食神: "把兴趣变成持续产出时",
+  伤官: "打破旧安排寻找新路时", 偏财: "整合人与现实资源时", 正财: "经营稳定生活和资源时",
+  七杀: "面对压力推进任务时", 正官: "承担责任建立秩序时", 偏印: "依靠独特经验判断时", 正印: "依靠知识和标准判断时",
+};
+const TASK_ENDINGS: Record<string, string> = {
+  比肩: "让自立成为选择，不必所有事都自己扛", 劫财: "先确认合作边界，不靠比较证明位置",
+  食神: "建立稳定节奏，不再等待完美状态", 伤官: "把变化变成选择，不因受限就急着离开",
+  偏财: "给机会设定边界，不必什么资源都接住", 正财: "为变化留下余地，不只追求绝对稳定",
+  七杀: "给压力设定上限，不再一直逼迫自己", 正官: "保留调整规则的空间，不只证明自己可靠",
+  偏印: "让独特经验进入现实，不退回自己的世界", 正印: "把认可当作支撑，不拿它衡量全部价值",
 };
 
 function rootCount(stem: string, pillars: PillarDetail[]) {
@@ -65,7 +65,7 @@ function keyRelation(pillars: PillarDetail[], relations: Bazi["analysis_context"
   return `${relation.branches}${names[relation.relation] ?? relation.relation}`;
 }
 
-export function generateCardCopy(bazi: Bazi) {
+export function generateCardCopy(bazi: Bazi): CardCopy {
   const pillars = bazi.analysis_context.pillars;
   const visible: Array<{ position: string; stem: string; tenGod: string; rootCount: number }> = [];
   const rooted: string[] = [];
@@ -84,19 +84,29 @@ export function generateCardCopy(bazi: Bazi) {
   if (relation) factParts.push(relation);
   const coreMystic = `${factParts[0]}；${factParts.slice(1).join("，")}。`;
 
-  const priorities: Record<string, number> = { year: 3, month: 2, time: 1 };
-  const primary = [...visible].sort((a, b) => b.rootCount - a.rootCount || priorities[b.position] - priorities[a.position])[0];
+  // 年月决定较稳定的能力来源；时柱作为“现实落点”单独进入第二行与主线任务。
+  const foundation = visible.filter((item) => item.position === "year" || item.position === "month");
+  const priorities: Record<string, number> = { year: 1, month: 2 };
+  const primary = [...foundation].sort((a, b) => b.rootCount - a.rootCount || priorities[b.position] - priorities[a.position])[0];
   const outcomeGod = pillars[3].stem_ten_god;
-  const pair = `${primary.tenGod}|${outcomeGod}`;
-  const firstLine = pair === "偏财|正印"
-    ? "你善于整合现实资源，把成果做成能够长期成立、也容易获得认可的东西。"
-    : `你善于${WAYS[primary.tenGod]}，并倾向把它转化为${OUTCOMES[outcomeGod]}。`;
-  const tension = visible.find((item) => item.rootCount === 0)?.tenGod;
-  let secondLine = tension ? TENSION_LINES[tension] : TENSION_LINES[primary.tenGod];
-  if (!tension && /冲|刑|害|破/.test(relation)) secondLine = "当不同方向同时拉扯时，你可能会急着找出唯一正确的道路。";
-  else if (!tension && relation.includes("合")) secondLine = "当合作成为主要支撑时，你可能会忽略自己真正想保留的部分。";
-  const mainTask = pair === "偏财|正印"
-    ? "把整合资源、建立秩序的能力，从证明自己变成可以选择的工具。"
-    : MAIN_TASKS[primary.tenGod];
-  return { coreMystic, corePlain: [firstLine, secondLine], mainTask };
+  const firstLine = `处理问题时，你会${WAYS[primary.tenGod]}，并落实为${OUTCOMES[outcomeGod]}。`;
+  const unrootedVisible = visible.filter((item) => item.rootCount === 0);
+  const tensionPriorities: Record<string, number> = { year: 1, month: 3, time: 2 };
+  const tensionGod = unrootedVisible.length
+    ? [...unrootedVisible].sort((a, b) => tensionPriorities[b.position] - tensionPriorities[a.position])[0].tenGod
+    : primary.tenGod;
+  const mainTask = `${TASK_OPENERS[primary.tenGod]}，${TASK_ENDINGS[outcomeGod]}。`;
+  return {
+    coreMystic,
+    corePlain: [firstLine, TIME_LINES[outcomeGod]],
+    mainTask,
+    analysisSignature: {
+      primaryGod: primary.tenGod,
+      primaryPosition: primary.position,
+      outcomeGod,
+      tensionGod,
+      keyRelation: relation,
+      taskCode: `${primary.tenGod}-${outcomeGod}`,
+    },
+  };
 }

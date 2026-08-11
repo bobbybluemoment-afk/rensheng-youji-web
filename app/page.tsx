@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { ScaledCard } from "./components/LifeCard";
 import { generateProfile } from "./lib/engine";
-import { CITY_LOCATIONS, normalizeCity } from "./lib/solar";
+import { hasKnownLocation } from "./lib/solar";
 import type { CardProfile, Gender, TimeBasis } from "./lib/types";
 
 type FormState = {
@@ -33,7 +33,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const knownCity = Boolean(CITY_LOCATIONS[normalizeCity(form.birthplace)]);
+  const knownCity = hasKnownLocation(form.birthplace);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -91,7 +91,7 @@ export default function Home() {
 
           <label>姓名（可选）<input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="用于卡片署名" /></label>
           <label>出生日期与时间<input type="datetime-local" value={form.birth} onChange={(event) => update("birth", event.target.value)} required /></label>
-          <label>出生城市<input value={form.birthplace} onChange={(event) => update("birthplace", event.target.value)} placeholder="例如：北京" required /></label>
+          <label>出生地<input value={form.birthplace} onChange={(event) => update("birthplace", event.target.value)} placeholder="例如：湖北宜昌夷陵区" required /></label>
 
           <fieldset>
             <legend>性别</legend>
@@ -111,7 +111,7 @@ export default function Home() {
 
           {!knownCity && form.timeBasis === "local_civil" && (
             <div className="advanced-box">
-              <p>这个城市还不在内置城市库，请补充：</p>
+              <p>暂未匹配到该地点。中国地点请补充省/市/县区；海外地点可填写：</p>
               <label>经度<input type="number" step="0.0001" value={form.longitude} onChange={(event) => update("longitude", event.target.value)} placeholder="例如 116.4074" /></label>
               <label>IANA 时区<input value={form.timezone} onChange={(event) => update("timezone", event.target.value)} placeholder="例如 Asia/Shanghai" /></label>
             </div>

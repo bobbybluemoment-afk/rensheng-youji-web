@@ -62,6 +62,22 @@ export type CardProfile = {
   centerYear: number;
   timeline: TimelineRow[];
   stageLabel: string;
-  currentIssue: { domain: string; headline: string; example: string };
+  currentIssue: { domain: string; mechanism: string; headline: string; example: string };
   warning?: string;
+};
+
+export type AnalysisSignature = {
+  primaryGod: string;
+  primaryPosition: string;
+  outcomeGod: string;
+  tensionGod: string;
+  keyRelation: string;
+  taskCode: string;
+};
+
+export type CardCopy = {
+  coreMystic: string;
+  corePlain: string[];
+  mainTask: string;
+  analysisSignature: AnalysisSignature;
 };

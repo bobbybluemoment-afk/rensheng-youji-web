@@ -25,15 +25,15 @@ export function generateProfile(input: GenerateInput): CardProfile {
   });
   const bazi = calculateBazi(adjusted.date, input.gender);
   const copy = generateCardCopy(bazi);
-  const kline = buildKline(bazi, adjusted.date.getFullYear());
-  const talent = (roles as Record<string, [string, string]>)[bazi.day_pillar]?.[1]
+  const kline = buildKline(bazi, adjusted.date.getFullYear(), undefined, copy);
+  const talent = (roles as unknown as Record<string, [string, string]>)[bazi.day_pillar]?.[1]
     ?? "你能在长期经历中逐渐找到自己的节奏，并把经验变成可重复使用的能力。";
   const original = input.birth.replace("T", " ");
   return {
     name: input.name?.trim() || "",
     birth: original,
     trueSolarTime: adjusted.text,
-    birthplace: input.birthplace.trim(),
+    birthplace: adjusted.resolvedName || input.birthplace.trim(),
     bazi,
     talentDescription: talent,
     coreMystic: copy.coreMystic,

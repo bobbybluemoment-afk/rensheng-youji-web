@@ -1,38 +1,91 @@
+import locationsPayload from "./china_county_locations.json";
 import type { TimeBasis } from "./types";
 
-type CityLocation = { longitude: number; timezone: string };
+type LocationRecord = { n: string; p: string[]; x: number; z: string };
+type CityLocation = { longitude: number; timezone: string; resolvedName: string };
 
-const chinaCities: Record<string, number> = {
-  北京: 116.4074, 上海: 121.4737, 天津: 117.2008, 重庆: 106.5516,
-  广州: 113.2644, 深圳: 114.0579, 杭州: 120.1551, 南京: 118.7969,
-  苏州: 120.5853, 武汉: 114.3054, 成都: 104.0665, 西安: 108.9398,
-  郑州: 113.6254, 长沙: 112.9388, 合肥: 117.2272, 济南: 117.1201,
-  青岛: 120.3826, 厦门: 118.0894, 泉州: 118.6759, 福州: 119.2965,
-  南昌: 115.8582, 昆明: 102.8329, 贵阳: 106.6302, 南宁: 108.3669,
-  海口: 110.1983, 三亚: 109.5119, 哈尔滨: 126.6424, 长春: 125.3235,
-  沈阳: 123.4315, 大连: 121.6147, 石家庄: 114.5149, 太原: 112.5492,
-  呼和浩特: 111.7492, 乌鲁木齐: 87.6168, 拉萨: 91.1322, 兰州: 103.8343,
-  西宁: 101.7782, 银川: 106.2309,
-};
+const COUNTRY_PREFIXES = ["中华人民共和国", "中国"];
+const SUFFIXES = [
+  "维吾尔自治区", "壮族自治区", "回族自治区", "特别行政区", "自治州", "自治县", "自治旗",
+  "自治区", "开发区", "管理区", "地区", "林区", "矿区", "新区", "街道", "特区", "省", "市", "县", "区", "旗", "盟",
+].sort((a, b) => b.length - a.length);
+const records = (locationsPayload as { locations: LocationRecord[] }).locations;
+let locationIndex: Map<string, LocationRecord[]> | undefined;
 
-export const CITY_LOCATIONS: Record<string, CityLocation> = Object.fromEntries(
-  Object.entries(chinaCities).map(([city, longitude]) => [city, { longitude, timezone: "Asia/Shanghai" }]),
-);
-Object.assign(CITY_LOCATIONS, {
-  香港: { longitude: 114.1694, timezone: "Asia/Hong_Kong" },
-  澳门: { longitude: 113.5439, timezone: "Asia/Macau" },
-  台北: { longitude: 121.5654, timezone: "Asia/Taipei" },
-});
+function clean(value: string) {
+  let result = value.trim().replace(/[\s,，/\\·、—_-]+/g, "");
+  const prefix = COUNTRY_PREFIXES.find((item) => result.startsWith(item));
+  if (prefix) result = result.slice(prefix.length);
+  return result;
+}
+
+function stripSuffix(value: string) {
+  const result = clean(value);
+  const suffix = SUFFIXES.find((item) => result.endsWith(item) && result.length > item.length);
+  return suffix ? result.slice(0, -suffix.length) : result;
+}
 
 export function normalizeCity(city: string) {
-  let value = city.trim();
-  for (const suffix of ["特别行政区", "自治州", "地区", "市", "县", "区"]) {
-    if (value.endsWith(suffix)) {
-      value = value.slice(0, -suffix.length);
-      break;
-    }
+  return stripSuffix(city);
+}
+
+function variants(record: LocationRecord) {
+  const parts = record.p.map(clean);
+  const short = record.p.map(stripSuffix);
+  const values = new Set([clean(record.n), stripSuffix(record.n), parts.join(""), short.join("")]);
+  if (parts.length >= 2) {
+    values.add(parts.slice(-2).join(""));
+    values.add(short.slice(-2).join(""));
+    values.add(parts[0] + parts.at(-1));
+    values.add(short[0] + short.at(-1));
   }
-  return value;
+  return [...values].filter(Boolean) as string[];
+}
+
+function getLocationIndex() {
+  if (locationIndex) return locationIndex;
+  locationIndex = new Map();
+  records.forEach((record) => variants(record).forEach((key) => {
+    const values = locationIndex!.get(key) ?? [];
+    values.push(record);
+    locationIndex!.set(key, values);
+  }));
+  return locationIndex;
+}
+
+function describe(record: LocationRecord) {
+  return record.p.join("·");
+}
+
+function chooseLocation(city: string, candidates: LocationRecord[]) {
+  const unique = [...new Map(candidates.map((item) => [`${item.p.join("/")}|${item.x}|${item.z}`, item])).values()];
+  if (unique.length === 1) return unique[0];
+  const longitudes = unique.map((item) => item.x);
+  if (Math.max(...longitudes) - Math.min(...longitudes) <= 0.08) {
+    return [...unique].sort((a, b) => b.p.length - a.p.length)[0];
+  }
+  const choices = unique.slice(0, 6).map(describe).join("、") + (unique.length > 6 ? "等" : "");
+  throw new Error(`出生地“${city}”存在重名，请补充省或地级市。可选地点：${choices}。`);
+}
+
+export function resolveLocation(city: string, custom?: { longitude?: number; timezone?: string }): CityLocation {
+  if (custom?.longitude !== undefined) {
+    if (!custom.timezone) throw new Error("海外或自定义地点必须提供 IANA 时区，例如 Asia/Tokyo。");
+    return { longitude: custom.longitude, timezone: custom.timezone, resolvedName: city.trim() };
+  }
+  const index = getLocationIndex();
+  const candidates = index.get(clean(city)) ?? index.get(stripSuffix(city));
+  if (!candidates?.length) {
+    throw new Error("当前地点库尚未匹配到该出生地。中国地点请补充省/市/县区；海外地点请展开高级设置，提供经度和 IANA 时区。");
+  }
+  const selected = chooseLocation(city, candidates);
+  return { longitude: selected.x, timezone: custom?.timezone || selected.z, resolvedName: describe(selected) };
+}
+
+export function hasKnownLocation(city: string) {
+  if (!city.trim()) return true;
+  const index = getLocationIndex();
+  return Boolean(index.get(clean(city))?.length || index.get(stripSuffix(city))?.length);
 }
 
 function dayOfYear(date: Date) {
@@ -50,12 +103,15 @@ function equationOfTimeMinutes(value: Date) {
 }
 
 function timezoneOffsetHours(value: Date, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    timeZoneName: "longOffset",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: false,
-  }).formatToParts(value);
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone, timeZoneName: "longOffset", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(value);
+  } catch {
+    throw new Error("timezone 必须是有效的 IANA 时区名称。");
+  }
   const label = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT+00:00";
   const match = label.match(/GMT([+-])(\d{2}):?(\d{2})?/);
   if (!match) return 0;
@@ -73,23 +129,21 @@ export function adjustBirthTime(
   const [year, month, day] = datePart.split("-").map(Number);
   const [hour, minute] = timePart.split(":").map(Number);
   const local = new Date(year, month - 1, day, hour, minute, 0);
+  const location = basis === "true_solar_adjusted"
+    ? { resolvedName: city.trim(), longitude: 0, timezone: "" }
+    : resolveLocation(city, custom);
   if (basis === "true_solar_adjusted") {
-    return { date: local, correction: 0, text: birth.replace("T", " ") };
+    return { date: local, correction: 0, text: birth.replace("T", " "), resolvedName: location.resolvedName };
   }
-  const known = CITY_LOCATIONS[normalizeCity(city)];
-  const longitude = custom?.longitude ?? known?.longitude;
-  const timezone = custom?.timezone ?? known?.timezone;
-  if (longitude === undefined || !timezone) {
-    throw new Error("城市库尚未收录该城市，请展开高级设置并填写经度与IANA时区。")
-  }
-  const offset = timezoneOffsetHours(local, timezone);
-  const correction = equationOfTimeMinutes(local) + 4 * longitude - 60 * offset;
+  const offset = timezoneOffsetHours(local, location.timezone);
+  const correction = equationOfTimeMinutes(local) + 4 * location.longitude - 60 * offset;
   const adjusted = new Date(local.getTime() + correction * 60000);
   const pad = (value: number) => String(value).padStart(2, "0");
   return {
     date: adjusted,
     correction,
+    resolvedName: location.resolvedName,
     text: `${adjusted.getFullYear()}-${pad(adjusted.getMonth() + 1)}-${pad(adjusted.getDate())} ${pad(adjusted.getHours())}:${pad(adjusted.getMinutes())}`,
-    warning: "真太阳时按城市中心经度近似；若接近时辰边界，建议用具体出生地址复核。",
+    warning: "真太阳时按城市或县区中心经度近似；若接近时辰边界，建议用具体出生地址复核。",
   };
 }
