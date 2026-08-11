@@ -19,7 +19,7 @@ type FormState = {
 
 const initialForm: FormState = {
   name: "",
-  birth: "1999-01-22T17:45",
+  birth: "1990-05-04T13:49",
   birthplace: "北京",
   gender: "male",
   timeBasis: "local_civil",
