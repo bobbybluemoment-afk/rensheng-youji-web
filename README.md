@@ -14,6 +14,11 @@
 
 地点数据来源及许可证见 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES)。地点中心经度只用于真太阳时近似；接近时辰边界时，仍建议用具体出生地址复核。
 
+## 联系与项目入口
+
+- 网页底部提供作者微信二维码，方便反馈体验或了解后续内容；二维码不会进入用户下载的卡片图片。
+- 免费版项目：[bobbybluemoment-afk/rensheng-youji-api](https://github.com/bobbybluemoment-afk/rensheng-youji-api)
+
 ## 本地开发
 
 ```bash
@@ -27,4 +32,4 @@ npm run dev
 npm run build
 ```
 
-当前版本：1.1.0
+当前版本：1.1.1

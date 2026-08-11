@@ -143,6 +143,21 @@ export default function Home() {
           {profile.warning && <p className="warning-note">{profile.warning}</p>}
         </section>
       )}
+
+      <section className="contact-section" aria-labelledby="contact-title">
+        <div className="contact-copy">
+          <div className="eyebrow">找到人生有迹</div>
+          <h2 id="contact-title">想继续了解，欢迎来找我。</h2>
+          <p>想反馈使用体验、了解后续报告，或继续关注“人生有迹”，可以扫码添加微信。添加时建议备注“人生有迹”。</p>
+          <a href="https://github.com/bobbybluemoment-afk/rensheng-youji-api" target="_blank" rel="noreferrer">在 GitHub 查看免费版项目</a>
+        </div>
+        <div className="contact-qr">
+          <img src="/wechat-contact.jpg" alt="人生有迹作者景行的微信二维码" />
+          <span>微信 · 景行</span>
+        </div>
+      </section>
+
+      <footer className="site-footer">人生有迹 · 传统文化体验与自我观察工具</footer>
     </main>
   );
 }
