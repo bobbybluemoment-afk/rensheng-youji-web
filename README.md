@@ -33,3 +33,11 @@ npm run build
 ```
 
 当前版本：1.1.1
+
+## 成长地图
+
+`/growth-map` 提供“人生有迹｜成长地图”的免费网页入口。网页在浏览器本地完成出生地点匹配、真太阳时换算、四柱与大运整理，再生成一段可直接交给本地AI的完整请求。AI会先进行四条事实校准，再生成六维报告、连续阶段分析与旺运指南。
+
+成长地图 Skill 位于：
+
+`https://github.com/bobbybluemoment-afk/rensheng-youji-api/tree/main/skills/rensheng-youji-growth-map`

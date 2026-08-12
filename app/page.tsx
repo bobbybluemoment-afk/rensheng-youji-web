@@ -78,6 +78,7 @@ export default function Home() {
           <h1>先看清你的人生主线，<br />再看这几年怎么走。</h1>
           <p>输入出生资料，生成一张包含人生主线、20年连续K线和当前课题的免费卡片。计算与制图都在你的浏览器里完成。</p>
           <div className="privacy-pill">不登录 · 不用验证码 · 出生资料不上传</div>
+          <a className="growth-map-entry" href="/growth-map">体验免费成长地图 →</a>
         </div>
         <div className="hero-mark" aria-hidden="true"><img src="/logo.png" alt="" /></div>
       </section>
